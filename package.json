@@ -1,10 +1,10 @@
 {
   "name": "formBuilder",
-  "version": "3.6.2",
+  "version": "3.6.3-0.0.1",
   "main": "dist/form-builder.min.js",
   "homepage": "https://formbuilder.online/",
   "repository": {
-    "url": "https://github.com/kevinchappell/formBuilder.git",
+    "url": "https://github.com/mrDinckleman/formBuilder.git",
     "type": "git"
   },
   "files": [
@@ -13,8 +13,8 @@
     "src/**/*"
   ],
   "author": "Kevin Chappell <kevin.b.chappell@gmail.com>",
-  "contributors": [],
-  "bugs": "https://github.com/kevinchappell/formBuilder/issues",
+  "contributors": ["Sergey Kovalchuk <admin@vitam.in.ua>"],
+  "bugs": "https://github.com/mrDinckleman/formBuilder/issues",
   "description": "A jQuery plugin for drag and drop form building",
   "keywords": [
     "jquery-plugin",

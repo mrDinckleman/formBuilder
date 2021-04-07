@@ -196,6 +196,19 @@ class FormRender {
         const controlClass = control.getClass(fieldData.type, fieldData.subtype)
         const field = engine.build(controlClass, sanitizedField)
 
+        if (fieldData.type === 'fieldset' && Array.isArray(fieldData.fields)) {
+          fieldData.fields.forEach(innerFieldData => {
+            const fieldData = innerFieldData
+            const sanitizedField = this.santizeField(fieldData, instanceIndex)
+
+            // determine the control class for this type, and then process it through the layout engine
+            const controlClass = control.getClass(fieldData.type, fieldData.subtype)
+            const innerField = engine.build(controlClass, sanitizedField)
+
+            field.appendChild(innerField)
+          })
+        }
+
         rendered.push(field)
       }
 

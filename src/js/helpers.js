@@ -242,6 +242,10 @@ export default class Helpers {
             fieldData.values = _this.fieldOptionData($field)
           }
 
+          if (fieldData.type === 'fieldset') {
+            fieldData.fields = _this.prepData($field.find('.stage-wrap')[0])
+          }
+
           formData.push(fieldData)
         }
       })
@@ -324,7 +328,7 @@ export default class Helpers {
    */
   getAttrVals(field) {
     const fieldData = Object.create(null)
-    const attrs = field.querySelectorAll('[class*="fld-"]')
+    const attrs = field.querySelector('.frm-holder').querySelectorAll('[class*="fld-"]')
     forEach(attrs, index => {
       const attr = attrs[index]
       const name = camelCase(attr.getAttribute('name'))
@@ -358,7 +362,7 @@ export default class Helpers {
 
     const fieldType = $field.attr('type')
     const $prevHolder = $('.prev-holder', field)
-    let previewData = Object.assign({}, _this.getAttrVals(field, previewData), { type: fieldType })
+    let previewData = Object.assign({}, _this.getAttrVals(field), { type: fieldType })
 
     if (fieldType.match(d.optionFieldsRegEx)) {
       previewData.values = []
@@ -757,16 +761,19 @@ export default class Helpers {
     if (!field) {
       return field
     }
-    const $editPanel = $('.frm-holder', field)
-    const $preview = $('.prev-holder', field)
+    const $editPanel = $('> .frm-holder', field)
+    const $preview = $('> .prev-holder', field)
+    const $fieldset = $('> .frmb-fieldset', field)
     field.classList.toggle('editing')
     $('.toggle-form', field).toggleClass('open')
     if (animate) {
       $preview.slideToggle(250)
       $editPanel.slideToggle(250)
+      $fieldset.slideToggle(250)
     } else {
       $preview.toggle()
       $editPanel.toggle()
+      $fieldset.toggle()
     }
     this.updatePreview($(field))
     if (field.classList.contains('editing')) {

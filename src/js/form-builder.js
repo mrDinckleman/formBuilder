@@ -58,9 +58,10 @@ const FormBuilder = function(opts, element, $) {
   const $cbUL = $(d.controls)
 
   // Sortable fields
-  $stage.sortable({
+  const stageSortableOptions = {
     cursor: 'move',
     opacity: 0.9,
+    connectWith: '.stage-wrap',
     revert: 150,
     beforeStop: (evt, ui) => h.beforeStop.call(h, evt, ui),
     start: (evt, ui) => h.startMoving.call(h, evt, ui),
@@ -69,7 +70,8 @@ const FormBuilder = function(opts, element, $) {
       ', ',
     ),
     placeholder: 'frmb-placeholder',
-  })
+  }
+  $stage.sortable(stageSortableOptions)
 
   if (!opts.allowStageSort) {
     $stage.sortable('disable')
@@ -79,7 +81,7 @@ const FormBuilder = function(opts, element, $) {
   $cbUL.sortable({
     helper: 'clone',
     opacity: 0.9,
-    connectWith: $stage,
+    connectWith: '.stage-wrap',
     cancel: '.formbuilder-separator',
     cursor: 'move',
     scroll: false,
@@ -94,9 +96,10 @@ const FormBuilder = function(opts, element, $) {
         return false
       }
 
-      if (ui.item.parent()[0] === d.stage) {
+      const stage = ui.item.closest('.stage-wrap')
+      if (stage.length) {
         h.doCancel = true
-        processControl(ui.item)
+        processControl(ui.item, stage)
       } else {
         h.setFieldOrder($cbUL)
         h.doCancel = !opts.sortableControls
@@ -104,7 +107,7 @@ const FormBuilder = function(opts, element, $) {
     },
   })
 
-  const processControl = control => {
+  const processControl = (control, stage = $stage) => {
     if (control[0].classList.contains('input-set-control')) {
       const inputSets = []
       const inputSet = opts.inputSets.find(set => hyphenCase(set.name || set.label) === control[0].dataset.type)
@@ -120,13 +123,13 @@ const FormBuilder = function(opts, element, $) {
 
       inputSets.push(...inputSet.fields)
       inputSets.forEach(field => {
-        prepFieldVars(field, true)
+        prepFieldVars(field, true, stage)
         if (h.stopIndex || h.stopIndex === 0) {
           h.stopIndex++
         }
       })
     } else {
-      prepFieldVars(control, true)
+      prepFieldVars(control, true, stage)
     }
   }
 
@@ -170,7 +173,7 @@ const FormBuilder = function(opts, element, $) {
       $stage.prepend(disabledField('prepend'))
     }
 
-    if (opts.append && !$('.disabled-field.form-.append', d.stage).length) {
+    if (opts.append && !$('.disabled-field.form-append', d.stage).length) {
       cancelArray.push(true)
       $stage.append(disabledField('append'))
     }
@@ -180,7 +183,7 @@ const FormBuilder = function(opts, element, $) {
   }
 
   // builds the standard formbuilder datastructure for a field definition
-  const prepFieldVars = function($field, isNew = false) {
+  const prepFieldVars = function($field, isNew = false, stage = $stage) {
     let field = {}
     if ($field instanceof jQuery) {
       // get the default type etc & label for this field
@@ -237,8 +240,13 @@ const FormBuilder = function(opts, element, $) {
       }, 10)
     }
 
-    appendNewField(field, isNew)
+    appendNewField(field, isNew, stage)
     opts.onAddField(data.lastID, field)
+
+    if (field.type === 'fieldset' && Array.isArray(field.fields)) {
+      const stage = $('.stage-wrap', `#${data.lastID}`)
+      field.fields.forEach(fieldData => prepFieldVars(trimObj(fieldData), false, stage))
+    }
 
     d.stage.classList.remove('empty')
   }
@@ -321,7 +329,7 @@ const FormBuilder = function(opts, element, $) {
 
   const defaultFieldAttrs = type => {
     const defaultAttrs = ['required', 'label', 'description', 'placeholder', 'className', 'name', 'access', 'value']
-    const noValFields = ['header', 'paragraph', 'file', 'autocomplete'].concat(d.optionFields)
+    const noValFields = ['header', 'paragraph', 'file', 'autocomplete', 'fieldset'].concat(d.optionFields)
 
     const valueField = !noValFields.includes(type)
 
@@ -346,6 +354,7 @@ const FormBuilder = function(opts, element, $) {
       header: ['label', 'subtype', 'className', 'access'],
       hidden: ['name', 'value', 'access'],
       paragraph: ['label', 'subtype', 'className', 'access'],
+      fieldset: ['label', 'subtype', 'className', 'access'],
       number: defaultAttrs.concat(['min', 'max', 'step']),
       select: defaultAttrs.concat(['multiple', 'options']),
       textarea: defaultAttrs.concat(['subtype', 'maxlength', 'rows']),
@@ -365,7 +374,7 @@ const FormBuilder = function(opts, element, $) {
     }
 
     // Help Text / Description Field
-    if (['header', 'paragraph', 'button'].includes(type)) {
+    if (['header', 'paragraph', 'button', 'fieldset'].includes(type)) {
       removeFromArray('description', typeAttrs)
     }
 
@@ -847,7 +856,7 @@ const FormBuilder = function(opts, element, $) {
 
   const requiredField = fieldData => {
     const { type } = fieldData
-    const noRequire = ['header', 'paragraph', 'button']
+    const noRequire = ['header', 'paragraph', 'button', 'fieldset']
     const noMake = []
     let requireField = ''
 
@@ -864,7 +873,7 @@ const FormBuilder = function(opts, element, $) {
   }
 
   // Append the new field to the editor
-  const appendNewField = function(values, isNew = true) {
+  const appendNewField = function(values, isNew = true, stage = $stage) {
     data.lastID = h.incrementId(data.lastID)
 
     const type = values.type || 'text'
@@ -872,6 +881,7 @@ const FormBuilder = function(opts, element, $) {
     if (type === 'hidden') {
       label = `${mi18n.get(type)}: ${values.name}`
     }
+    opts.disabledFieldButtons['fieldset'] = ['copy'] // TODO fix fieldset copying
     const disabledFieldButtons = opts.disabledFieldButtons[type] || values.disabledFieldButtons
     let fieldButtons = [
       m('a', null, {
@@ -936,6 +946,12 @@ const FormBuilder = function(opts, element, $) {
 
     liContents.push(editPanel)
 
+    if (type === 'fieldset') {
+      liContents.push(m('div', m('ul', '', { className: 'frmb stage-wrap' }), {
+        className: 'frmb-fieldset',
+      }))
+    }
+
     const field = m('li', liContents, {
       class: `${type}-field form-field`,
       type: type,
@@ -946,15 +962,19 @@ const FormBuilder = function(opts, element, $) {
     $li.data('fieldData', { attrs: values })
 
     if (typeof h.stopIndex !== 'undefined') {
-      $('> li', d.stage).eq(h.stopIndex).before($li)
+      $('> li', stage).eq(h.stopIndex).before($li)
     } else {
-      $stage.append($li)
+      stage.append($li)
     }
 
     $('.sortable-options', $li).sortable({ update: () => h.updatePreview($li) })
 
     // generate the control, insert it into the list item & add it to the stage
     h.updatePreview($li)
+
+    if (type === 'fieldset') {
+      $('.stage-wrap', $li).sortable(stageSortableOptions)
+    }
 
     if (opts.typeUserEvents[type] && opts.typeUserEvents[type].onadd) {
       opts.typeUserEvents[type].onadd(field)
@@ -1035,6 +1055,8 @@ const FormBuilder = function(opts, element, $) {
     $clone.attr('name', cloneName)
     $clone.addClass('cloned')
     $('.sortable-options', $clone).sortable()
+
+    $('.stage-wrap', $clone).sortable(stageSortableOptions)
 
     if (opts.typeUserEvents[type] && opts.typeUserEvents[type].onclone) {
       opts.typeUserEvents[type].onclone($clone[0])
