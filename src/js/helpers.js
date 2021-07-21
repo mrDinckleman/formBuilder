@@ -194,7 +194,7 @@ export default class Helpers {
 
     if (form.childNodes.length !== 0) {
       // build data object
-      forEach(form.childNodes, function(index, field) {
+      forEach(form.childNodes, function (index, field) {
         const $field = $(field)
 
         if (!$field.hasClass('disabled-field')) {
@@ -368,7 +368,7 @@ export default class Helpers {
       previewData.values = []
       previewData.multiple = $('[name="multiple"]', field).is(':checked')
 
-      $('.sortable-options li', field).each(function(i, $option) {
+      $('.sortable-options li', field).each(function (i, $option) {
         const option = {
           selected: $('.option-selected', $option).is(':checked'),
           value: $('.option-value', $option).val(),
@@ -457,9 +457,7 @@ export default class Helpers {
       classes.push(primaryType)
     }
 
-    const trimmedClassName = unique(classes)
-      .join(' ')
-      .trim()
+    const trimmedClassName = unique(classes).join(' ').trim()
 
     className.value = trimmedClassName
 
@@ -557,11 +555,11 @@ export default class Helpers {
       className: 'no btn btn-danger btn-sm',
     })
 
-    no.onclick = function() {
+    no.onclick = function () {
       _this.closeConfirm(overlay)
     }
 
-    yes.onclick = function() {
+    yes.onclick = function () {
       yesAction()
       _this.closeConfirm(overlay)
     }
@@ -653,7 +651,11 @@ export default class Helpers {
         i18n.clearAllMessage,
         () => {
           _this.removeAllFields.call(_this, stage)
-          config.opts.notify.success(i18n.allFieldsRemoved)
+          if (config.opts.persistDefaultFields && config.opts.defaultFields) {
+            this.addDefaultFields()
+          } else {
+            config.opts.notify.success(i18n.allFieldsRemoved)
+          }
           config.opts.onClearAll()
         },
         coords,
@@ -663,13 +665,19 @@ export default class Helpers {
     }
   }
 
+  addDefaultFields() {
+    // Load default fields if none are set
+    config.opts.defaultFields.forEach(field => this.formBuilder.prepFieldVars(field))
+    this.d.stage.classList.remove('empty')
+  }
+
   /**
    * Removes all fields from the form
    * @param {Object} stage to remove fields form
    * @param {Boolean} animate whether to animate or not
    * @return {void}
    */
-  removeAllFields(stage, animate = true) {
+  removeAllFields(stage) {
     const i18n = mi18n.current
     const opts = config.opts
     const fields = stage.querySelectorAll('li.form-field')
@@ -687,25 +695,17 @@ export default class Helpers {
       markEmptyArray.push(true)
     }
 
-    if (!markEmptyArray.some(elem => elem === true)) {
+    if (!markEmptyArray.some(Boolean)) {
       stage.classList.add('empty')
       stage.dataset.content = i18n.getStarted
     }
 
-    if (animate) {
-      stage.classList.add('removing')
-      let outerHeight = 0
-      forEach(fields, index => (outerHeight += fields[index].offsetHeight + 3))
-      fields[0].style.marginTop = `${-outerHeight}px`
-      const animateTimeout = setTimeout(() => {
-        empty(stage).classList.remove('removing')
-        this.save()
-        clearTimeout(animateTimeout)
-      }, 400)
-    } else {
-      empty(stage)
-      this.save()
-    }
+    this.emptyStage(stage)
+  }
+
+  emptyStage(stage) {
+    empty(stage).classList.remove('removing')
+    this.save()
   }
 
   /**
@@ -813,7 +813,7 @@ export default class Helpers {
     const cbPosition = controls.getBoundingClientRect()
     const { top: stageTop } = stage.getBoundingClientRect()
 
-    $(window).scroll(function(evt) {
+    $(window).scroll(function (evt) {
       const scrollTop = $(evt.target).scrollTop()
       const offsetDefaults = {
         top: 5,
@@ -908,7 +908,7 @@ export default class Helpers {
       return false
     }
 
-    $field.slideUp(animationSpeed, function() {
+    $field.slideUp(animationSpeed, function () {
       $field.removeClass('deleting')
       $field.remove()
       fieldRemoved = true

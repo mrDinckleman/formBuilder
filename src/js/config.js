@@ -54,6 +54,7 @@ export const defaultOptions = {
     },
   },
   onAddField: (fieldId, fieldData) => fieldData,
+  onAddFieldAfter: (fieldId, fieldData) => fieldData,
   onAddOption: obj => obj,
   onClearAll: noop,
   onCloseFieldEdit: noop,
@@ -63,6 +64,7 @@ export const defaultOptions = {
    * @param {Object} formData
    */
   onSave: noop,
+  persistDefaultFields: false,
   prepend: false,
   replaceFields: [],
   roles: {

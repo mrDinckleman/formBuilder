@@ -24,13 +24,13 @@ import {
   closest,
   safename,
   forceNumber,
-  getContentType
+  getContentType,
 } from './utils'
 import { css_prefix_text } from '../fonts/config.json'
 
 const DEFAULT_TIMEOUT = 333
 
-const FormBuilder = function(opts, element, $) {
+const FormBuilder = function (opts, element, $) {
   const formBuilder = this
   const i18n = mi18n.current
   const formID = `frmb-${new Date().getTime()}`
@@ -91,7 +91,7 @@ const FormBuilder = function(opts, element, $) {
     revert: 150,
     beforeStop: (evt, ui) => h.beforeStop.call(h, evt, ui),
     distance: 3,
-    update: function(event, ui) {
+    update: function (event, ui) {
       if (h.doCancel) {
         return false
       }
@@ -183,7 +183,7 @@ const FormBuilder = function(opts, element, $) {
   }
 
   // builds the standard formbuilder datastructure for a field definition
-  const prepFieldVars = function($field, isNew = false, stage = $stage) {
+  const prepFieldVars = ($field, isNew = false, stage = $stage) => {
     let field = {}
     if ($field instanceof jQuery) {
       // get the default type etc & label for this field
@@ -240,8 +240,9 @@ const FormBuilder = function(opts, element, $) {
       }, 10)
     }
 
-    appendNewField(field, isNew, stage)
     opts.onAddField(data.lastID, field)
+    appendNewField(field, isNew, stage)
+    opts.onAddFieldAfter(data.lastID, field)
 
     if (field.type === 'fieldset' && Array.isArray(field.fields)) {
       const stage = $('.stage-wrap', `#${data.lastID}`)
@@ -251,16 +252,16 @@ const FormBuilder = function(opts, element, $) {
     d.stage.classList.remove('empty')
   }
 
+  formBuilder.prepFieldVars = prepFieldVars
+
   // Parse saved XML template data
-  const loadFields = function(formData) {
+  const loadFields = function (formData) {
     formData = h.getData(formData)
     if (formData && formData.length) {
       formData.forEach(fieldData => prepFieldVars(trimObj(fieldData)))
       d.stage.classList.remove('empty')
     } else if (opts.defaultFields && opts.defaultFields.length) {
-      // Load default fields if none are set
-      opts.defaultFields.forEach(field => prepFieldVars(field))
-      d.stage.classList.remove('empty')
+      h.addDefaultFields()
     } else if (!opts.prepend && !opts.append) {
       d.stage.classList.add('empty')
       d.stage.dataset.content = mi18n.get('getStarted')
@@ -279,7 +280,7 @@ const FormBuilder = function(opts, element, $) {
    * @param  {Object} fieldData
    * @return {String} field options markup
    */
-  const fieldOptions = function(fieldData) {
+  const fieldOptions = function (fieldData) {
     const { type, values } = fieldData
     let fieldValues
     const optionActions = [m('a', mi18n.get('addOption'), { className: 'add add-opt' })]
@@ -290,7 +291,7 @@ const FormBuilder = function(opts, element, $) {
       return {
         selected: false,
         label,
-        value: hyphenCase(label)
+        value: hyphenCase(label),
       }
     }
 
@@ -314,8 +315,9 @@ const FormBuilder = function(opts, element, $) {
     const options = m(
       'ol',
       fieldValues.map((option, index) => {
-        const optionData = config.opts.onAddOption(option, {type, index, isMultiple})
-        return selectFieldOptions(optionData, isMultiple)}),
+        const optionData = config.opts.onAddOption(option, { type, index, isMultiple })
+        return selectFieldOptions(optionData, isMultiple)
+      }),
       {
         className: 'sortable-options',
       },
@@ -394,6 +396,7 @@ const FormBuilder = function(opts, element, $) {
   const advFields = values => {
     const { type } = values
     const advFields = []
+    const typeClass = controls.getClass(type)
     const fieldAttrs = defaultFieldAttrs(type)
     const advFieldMap = {
       required: () => requiredField(values),
@@ -497,6 +500,11 @@ const FormBuilder = function(opts, element, $) {
         useDefaultAttr.push(!typeDisabledAttrs.includes(attr))
       }
 
+      if (typeClass.definition.hasOwnProperty('defaultAttrs')) {
+        const userAttrs = Object.keys(typeClass.definition.defaultAttrs)
+        useDefaultAttr.push(!userAttrs.includes(attr))
+      }
+
       if (opts.typeUserAttrs[type]) {
         const userAttrs = Object.keys(opts.typeUserAttrs[type])
         useDefaultAttr.push(!userAttrs.includes(attr))
@@ -510,6 +518,12 @@ const FormBuilder = function(opts, element, $) {
         advFields.push(advFieldMap[attr](isDisabled))
       }
     })
+
+    // Append custom attributes as defined in control plugin definition
+    if (typeClass.definition.hasOwnProperty('defaultAttrs')) {
+      const customAttr = processTypeUserAttrs(typeClass.definition.defaultAttrs, values)
+      advFields.push(customAttr)
+    }
 
     // Append custom attributes as defined in typeUserAttrs option
     if (opts.typeUserAttrs[type]) {
@@ -533,6 +547,16 @@ const FormBuilder = function(opts, element, $) {
         [typeof attrData.value, () => true], // string, number,
       ].find(typeCondition => typeCondition[1](attrData))[0] || 'string'
     )
+  }
+
+  /**
+   *
+   * @param {Object} values    field attributes
+   * @param {String} subType   subType
+   * @return {Boolean}         indicates whether or not the field has a subtype
+   */
+  function hasSubType(values, subType) {
+    return values.subtype && values.subtype === subType
   }
 
   /**
@@ -563,21 +587,27 @@ const FormBuilder = function(opts, element, $) {
     for (const attribute in typeUserAttr) {
       if (typeUserAttr.hasOwnProperty(attribute)) {
         const attrValType = userAttrType(typeUserAttr[attribute])
-        const orig = mi18n.get(attribute)
-        const tUA = typeUserAttr[attribute]
-        const origValue = tUA.value || ''
-        tUA.value = values[attribute] || tUA.value || ''
+        if (attrValType !== 'undefined') {
+          const orig = mi18n.get(attribute)
+          const tUA = typeUserAttr[attribute]
+          const origValue = tUA.value || ''
+          tUA.value = values[attribute] || tUA.value || ''
 
-        if (tUA.label) {
-          i18n[attribute] = Array.isArray(tUA.label) ? mi18n.get(...tUA.label) || tUA.label[0] : tUA.label
+          if (tUA.label) {
+            i18n[attribute] = Array.isArray(tUA.label) ? mi18n.get(...tUA.label) || tUA.label[0] : tUA.label
+          }
+
+          if (attrTypeMap[attrValType]) {
+            advField.push(attrTypeMap[attrValType](attribute, tUA))
+          }
+
+          i18n[attribute] = orig
+          tUA.value = origValue
+        } else if (attrValType === 'undefined' && hasSubType(values, attribute)) {
+          advField.push(processTypeUserAttrs(typeUserAttr[attribute], values))
+        } else {
+          continue
         }
-
-        if (attrTypeMap[attrValType]) {
-          advField.push(attrTypeMap[attrValType](attribute, tUA))
-        }
-
-        i18n[attribute] = orig
-        tUA.value = origValue
       }
     }
 
@@ -598,6 +628,7 @@ const FormBuilder = function(opts, element, $) {
       name: name,
       type: attrs.type || 'text',
       className: [`fld-${name}`, (classname || className || '').trim()],
+      value: attrs.value || '',
     }
     const label = `<label for="${textAttrs.id}">${i18n[name] || ''}</label>`
 
@@ -607,7 +638,17 @@ const FormBuilder = function(opts, element, $) {
     }
 
     textAttrs = Object.assign({}, attrs, textAttrs)
-    const textInput = `<input ${attrString(textAttrs)}>`
+
+    const textInput = (() => {
+      if (textAttrs.type === 'textarea') {
+        const textValue = textAttrs.value
+        delete textAttrs.value
+        return `<textarea ${attrString(textAttrs)}>${textValue}</textarea>`
+      } else {
+        return `<input ${attrString(textAttrs)}>`
+      }
+    })()
+
     const inputWrap = `<div class="input-wrap">${textInput}</div>`
     return `<div class="form-group ${name}-wrap">${label}${inputWrap}</div>`
   }
@@ -645,7 +686,7 @@ const FormBuilder = function(opts, element, $) {
 
     const label = `<label for="${selectAttrs.id}">${i18n[name]}</label>`
 
-    Object.keys(restData).forEach(function(attr) {
+    Object.keys(restData).forEach(function (attr) {
       selectAttrs[attr] = restData[attr]
     })
 
@@ -875,7 +916,7 @@ const FormBuilder = function(opts, element, $) {
   }
 
   // Append the new field to the editor
-  const appendNewField = function(values, isNew = true, stage = $stage) {
+  const appendNewField = function (values, isNew = true, stage = $stage) {
     data.lastID = h.incrementId(data.lastID)
 
     const type = values.type || 'text'
@@ -994,26 +1035,30 @@ const FormBuilder = function(opts, element, $) {
   }
 
   // Select field html, since there may be multiple
-  const selectFieldOptions = function(optionData, multipleSelect) {
+  const selectFieldOptions = function (optionData, multipleSelect) {
     const optionTemplate = { selected: false, label: '', value: '' }
     const optionInputType = {
       selected: multipleSelect ? 'checkbox' : 'radio',
     }
     const optionInputTypeMap = {
       boolean: (value, prop) => {
-        const attrs = {value, type: optionInputType[prop] || 'checkbox'}
+        const attrs = { value, type: optionInputType[prop] || 'checkbox' }
         if (value) {
-          attrs.checked  = !!value
+          attrs.checked = !!value
         }
-        return['input', null, attrs]
+        return ['input', null, attrs]
       },
-      number: value => ['input', null, {value, type: 'number'}],
-      string: (value, prop) => (['input', null, {value, type: 'text', placeholder: mi18n.get(`placeholder.${prop}`) || ''}]),
-      array: values => ['select', values.map(({label, value}) => m('option', label, {value}))],
-      object: ({tag, content, ...attrs}) => [tag, content, attrs],
+      number: value => ['input', null, { value, type: 'number' }],
+      string: (value, prop) => [
+        'input',
+        null,
+        { value, type: 'text', placeholder: mi18n.get(`placeholder.${prop}`) || '' },
+      ],
+      array: values => ['select', values.map(({ label, value }) => m('option', label, { value }))],
+      object: ({ tag, content, ...attrs }) => [tag, content, attrs],
     }
 
-    optionData = {...optionTemplate, ...optionData}
+    optionData = { ...optionTemplate, ...optionData }
 
     const optionInputs = Object.entries(optionData).map(([prop, val]) => {
       const optionInputDataType = getContentType(val)
@@ -1125,7 +1170,7 @@ const FormBuilder = function(opts, element, $) {
   })
 
   // toggle fields
-  $stage.on('click touchstart', '.toggle-form, .close-field', function(e) {
+  $stage.on('click touchstart', '.toggle-form, .close-field', function (e) {
     e.stopPropagation()
     e.preventDefault()
     if (e.handled !== true) {
@@ -1201,7 +1246,7 @@ const FormBuilder = function(opts, element, $) {
   $stage.on('keyup', 'input.error', ({ target }) => $(target).removeClass('error'))
 
   // update preview for description
-  $stage.on('keyup', 'input[name="description"]', function(e) {
+  $stage.on('keyup', 'input[name="description"]', function (e) {
     const $field = $(e.target).parents('.form-field:eq(0)')
     const closestToolTip = $('.tooltip-element', $field)
     const ttVal = $(e.target).val()
@@ -1232,7 +1277,7 @@ const FormBuilder = function(opts, element, $) {
   })
 
   // format name attribute
-  $stage.on('blur', 'input.fld-name', function(e) {
+  $stage.on('blur', 'input.fld-name', function (e) {
     e.target.value = safename(e.target.value)
     if (e.target.value === '') {
       $(e.target).addClass('field-error').attr('placeholder', mi18n.get('cannotBeEmpty'))
@@ -1246,7 +1291,7 @@ const FormBuilder = function(opts, element, $) {
   })
 
   // Copy field
-  $stage.on('click touchstart', `.${css_prefix_text}copy`, function(evt) {
+  $stage.on('click touchstart', `.${css_prefix_text}copy`, function (evt) {
     evt.preventDefault()
     const currentItem = $(evt.target).parent().parent('li')
     const $clone = cloneItem(currentItem)
@@ -1271,7 +1316,7 @@ const FormBuilder = function(opts, element, $) {
 
     document.addEventListener(
       'modalClosed',
-      function() {
+      function () {
         $field.removeClass('deleting')
       },
       false,
@@ -1307,10 +1352,10 @@ const FormBuilder = function(opts, element, $) {
   })
 
   // Attach a callback to toggle roles visibility
-  $stage.on('click', 'input.fld-access', function(e) {
+  $stage.on('click', 'input.fld-access', function (e) {
     const roles = $(e.target).closest('.form-field').find('.available-roles')
     const enableRolesCB = $(e.target)
-    roles.slideToggle(250, function() {
+    roles.slideToggle(250, function () {
       if (!enableRolesCB.is(':checked')) {
         $('input[type=checkbox]', roles).removeAttr('checked')
       }
@@ -1318,7 +1363,7 @@ const FormBuilder = function(opts, element, $) {
   })
 
   // Attach a callback to add new options
-  $stage.on('click', '.add-opt', function(e) {
+  $stage.on('click', '.add-opt', function (e) {
     e.preventDefault()
     const type = $(e.target).closest('.form-field').attr('type')
     const $optionWrap = $(e.target).closest('.field-options')
@@ -1334,7 +1379,11 @@ const FormBuilder = function(opts, element, $) {
 
     const optionTemplate = { selected: false, label: '', value: '' }
     const $sortableOptions = $('.sortable-options', $optionWrap)
-    const optionData = config.opts.onAddOption(optionTemplate, {type, index: $sortableOptions.children().length, isMultiple})
+    const optionData = config.opts.onAddOption(optionTemplate, {
+      type,
+      index: $sortableOptions.children().length,
+      isMultiple,
+    })
     $sortableOptions.append(selectFieldOptions(optionData, isMultiple))
   })
 
@@ -1356,8 +1405,11 @@ const FormBuilder = function(opts, element, $) {
     clearFields: animate => h.removeAllFields(d.stage, animate),
     showData: h.showData.bind(h),
     save: minify => {
-      h.save(minify)
-      config.opts.onSave(h.getFormData())
+      const formData = h.save(minify)
+      const formDataJS = window.JSON.parse(formData)
+      config.opts.onSave(formDataJS)
+
+      return formDataJS
     },
     addField: (field, index) => {
       h.stopIndex = data.formData.length ? index : undefined
@@ -1378,6 +1430,7 @@ const FormBuilder = function(opts, element, $) {
         h.formActionButtons().forEach(button => d.formActions.appendChild(button))
       })
     },
+    showDialog: h.dialog.bind(h),
     toggleFieldEdit: fieldId => {
       const fieldIds = Array.isArray(fieldId) ? fieldId : [fieldId]
       fieldIds.forEach(fId => {
@@ -1436,21 +1489,23 @@ const methods = {
         setData: null,
         setLang: null,
         showData: null,
+        showDialog: null,
         toggleAllFieldEdit: null,
         toggleFieldEdit: null,
         getCurrentFieldId: null,
       },
+      markup,
       get formData() {
         return methods.instance.actions.getData && methods.instance.actions.getData('json')
       },
-      promise: new Promise(function(resolve, reject) {
+      promise: new Promise(function (resolve, reject) {
         mi18n
           .init(i18nOpts)
           .then(() => {
             elems.each(i => {
               const formBuilder = new FormBuilder(opts, elems[i], jQuery)
               jQuery(elems[i]).data('formBuilder', formBuilder)
-              Object.assign(methods, formBuilder.actions)
+              Object.assign(methods, formBuilder.actions, { markup })
               methods.instance.actions = formBuilder.actions
             })
             delete methods.instance.promise
@@ -1467,7 +1522,7 @@ const methods = {
   },
 }
 
-jQuery.fn.formBuilder = function(methodOrOptions = {}, ...args) {
+jQuery.fn.formBuilder = function (methodOrOptions = {}, ...args) {
   const isMethod = typeof methodOrOptions === 'string'
   if (isMethod) {
     if (methods[methodOrOptions]) {

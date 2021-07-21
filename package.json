@@ -1,6 +1,6 @@
 {
   "name": "formBuilder",
-  "version": "3.6.3-0.0.2",
+  "version": "3.6.3-0.0.3",
   "main": "dist/form-builder.min.js",
   "homepage": "https://formbuilder.online/",
   "repository": {
@@ -55,7 +55,7 @@
         "demo/assets/sass/site.scss"
       ]
     },
-    "fontServer": "http://fontello.com",
+    "fontServer": "https://fontello.com",
     "fontelloToken": "09d648f01d6c57cb9f9b8cc55043e0c0"
   },
   "babel": {
@@ -89,9 +89,12 @@
     "deploy:all": "npm-run-all deploy:demo deploy:site",
     "deploy:demo": "node tools/deploy-demo.js",
     "deploy:site": "node tools/deploy-site.js",
-    "docs": "mkdocs build",
+    "docs:build": "docker build --rm -t fb_docs .",
+    "docs:serve": "docker run -v `pwd`/docs/:/usr/src/app/docs --rm -p 8123:8123 -it fb_docs",
+    "docs": "npm-run-all docs:build docs:serve",
     "font": "babel-node tools/icon-font",
     "lint": "eslint ./src --ext .js || true",
+    "lint:fix": "eslint ./src --ext .js --fix",
     "semantic-release": "semantic-release",
     "start:devServer": "webpack-dev-server --mode development --config tools/webpack.config",
     "prestart": "npm-run-all -p build:vendor copy:lang",
@@ -124,7 +127,9 @@
     "cross-env": "^7.0.2",
     "css-loader": "^4.2.1",
     "eslint": "^7.7.0",
+    "eslint-config-prettier": "^8.3.0",
     "eslint-loader": "^4.0.2",
+    "eslint-plugin-prettier": "^3.4.0",
     "formbuilder-languages": "latest",
     "fs-extra": "^9.0.1",
     "html-webpack-harddisk-plugin": "^1.0.2",
@@ -147,14 +152,6 @@
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.0",
     "wrapper-webpack-plugin": "^2.1.0"
-  },
-  "prettier": {
-    "singleQuote": true,
-    "trailingComma": "all",
-    "printWidth": 120,
-    "semi": false,
-    "arrowParens": "avoid",
-    "spaceAfterFunction": false
   },
   "engines": {},
   "release": {

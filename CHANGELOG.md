@@ -1,3 +1,31 @@
+## [3.7.3](https://github.com/kevinchappell/formBuilder/compare/v3.7.2...v3.7.3) (2021-07-13)
+
+
+### Bug Fixes
+
+* documentation code colors ([b2db0d7](https://github.com/kevinchappell/formBuilder/commit/b2db0d7a06576a05802d8af68e89adad45301824))
+
+## [3.7.2](https://github.com/kevinchappell/formBuilder/compare/v3.7.1...v3.7.2) (2021-06-07)
+
+
+### Bug Fixes
+
+* save not returning js formData ([490ad72](https://github.com/kevinchappell/formBuilder/commit/490ad72c3efd7055792c9990821005f65d6ee812))
+
+## [3.7.1](https://github.com/kevinchappell/formBuilder/compare/v3.7.0...v3.7.1) (2021-06-04)
+
+
+### Bug Fixes
+
+* setData working intermittently ([753280f](https://github.com/kevinchappell/formBuilder/commit/753280f183663dd153802458209b6427c10f4c36)), closes [#1197](https://github.com/kevinchappell/formBuilder/issues/1197)
+
+# [3.7.0](https://github.com/kevinchappell/formBuilder/compare/v3.6.2...v3.7.0) (2021-05-28)
+
+
+### Features
+
+* persistDefaultFields option ([36f45f1](https://github.com/kevinchappell/formBuilder/commit/36f45f11535d5d8dedd38c94e0d6bc031a13d29c)), closes [#980](https://github.com/kevinchappell/formBuilder/issues/980)
+
 ## [3.6.2](https://github.com/kevinchappell/formBuilder/compare/v3.6.1...v3.6.2) (2020-12-07)
 
 

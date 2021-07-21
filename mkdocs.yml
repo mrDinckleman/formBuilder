@@ -67,10 +67,13 @@ nav:
   - layoutTemplates: formBuilder/options/layoutTemplates.md
   - notify: formBuilder/options/notify.md
   - onAddField: formBuilder/options/onAddField.md
+  - onAddFieldAfter: formBuilder/options/onAddFieldAfter.md
+  - onAddOption: formBuilder/options/onAddOption.md
   - onClearAll: formBuilder/options/onClearAll.md
   - onCloseFieldEdit: formBuilder/options/onCloseFieldEdit.md
   - onOpenFieldEdit: formBuilder/options/onOpenFieldEdit.md
   - onSave: formBuilder/options/onSave.md
+  - persistDefaultFields: formBuilder/options/persistDefaultFields.md
   - replaceFields: formBuilder/options/replaceFields.md
   - roles: formBuilder/options/roles.md
   - scrollToFieldOnAdd: formBuilder/options/scrollToFieldOnAdd.md
