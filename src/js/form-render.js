@@ -205,7 +205,7 @@ class FormRender {
             const controlClass = control.getClass(fieldData.type, fieldData.subtype)
             const innerField = engine.build(controlClass, sanitizedField)
 
-            field.appendChild(innerField)
+            field.querySelector('.fieldset').appendChild(innerField)
           })
         }
 

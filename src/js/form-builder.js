@@ -221,7 +221,7 @@ const FormBuilder = function(opts, element, $) {
     }
 
     if (!field.name) {
-      field.name = nameAttr(field)
+      field.name = nameAttr(field, stage.parent().is('.frmb-fieldset'))
     }
 
     if (isNew && ['text', 'number', 'file', 'date', 'select', 'textarea', 'autocomplete'].includes(field.type)) {
@@ -354,7 +354,7 @@ const FormBuilder = function(opts, element, $) {
       header: ['label', 'subtype', 'className', 'access'],
       hidden: ['name', 'value', 'access'],
       paragraph: ['label', 'subtype', 'className', 'access'],
-      fieldset: ['label', 'subtype', 'className', 'access'],
+      fieldset: ['label', 'subtype', 'className', 'access', 'repeatable'],
       number: defaultAttrs.concat(['min', 'max', 'step']),
       select: defaultAttrs.concat(['multiple', 'options']),
       textarea: defaultAttrs.concat(['subtype', 'maxlength', 'rows']),
@@ -474,6 +474,7 @@ const FormBuilder = function(opts, element, $) {
         }
         return boolAttribute('multiple', values, typeLabels[type] || typeLabels.default)
       },
+      repeatable: () => boolAttribute('repeatable', values, { first: 'repeatable' }),
     }
     let key
     const roles = values.role !== undefined ? values.role.split(',') : []

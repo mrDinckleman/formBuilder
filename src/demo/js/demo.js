@@ -174,10 +174,10 @@ jQuery(function($) {
         },
         style: 'border: 1px solid red',
       },
-      readonly: {
-        label: 'readonly',
-        value: false,
-      },
+      // readonly: {
+      //   label: 'readonly',
+      //   value: false,
+      // },
     },
     number: {
       volume: {
@@ -196,7 +196,7 @@ jQuery(function($) {
   }
 
   // test disabledAttrs
-  const disabledAttrs = ['placeholder', 'name']
+  const disabledAttrs = [] // ['placeholder', 'name']
 
   const fbOptions = {
     disabledSubtypes: {

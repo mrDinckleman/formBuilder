@@ -162,7 +162,7 @@ export const bindEvents = (element, events) => {
  * @param  {Object} field
  * @return {String}       name
  */
-export const nameAttr = function(field) {
+export const nameAttr = function(field, isRepeatable) {
   const epoch = new Date().getTime()
   const prefix = field.type || hyphenCase(field.label)
   return prefix + '-' + epoch

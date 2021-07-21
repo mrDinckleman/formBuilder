@@ -8,7 +8,10 @@ export default class controlFieldset extends control {
   static get definition() {
     return {
       i18n: {
-        default: 'Fieldset',
+        default: {
+          fieldset: 'Fieldset',
+          div: 'Div',
+        },
       },
     }
   }
@@ -18,7 +21,7 @@ export default class controlFieldset extends control {
    * @return {Object} DOM Element to be injected into the form.
    */
   build() {
-    const { type, ...attrs } = this.config
+    const { type, repeatable, ...attrs } = this.config
     let tag = type
 
     // some types use an element of a different name
@@ -31,8 +34,28 @@ export default class controlFieldset extends control {
       tag = typeMap[type]
     }
 
+    const remove = this.markup('button', 'X', {
+      type: 'button',
+      className: 'remove',
+    })
+    this.fieldset = this.markup(tag, repeatable ? remove : '', {
+      ...attrs,
+      className: 'fieldset',
+    })
+    const content = [this.fieldset]
+
+    if (repeatable) {
+      this.repeat = this.markup('button', 'Add', {
+        type: 'button',
+      })
+      this.repeat.addEventListener('click', () => {
+        this.repeat.parentNode.insertBefore(this.fieldset.cloneNode(true), this.repeat)
+      })
+      content.push(this.repeat)
+    }
+
     return {
-      field: this.markup(tag, '', attrs),
+      field: this.markup('div', content),
       layout: 'hidden',
     }
   }
