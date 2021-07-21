@@ -354,9 +354,10 @@ const FormBuilder = function(opts, element, $) {
       header: ['label', 'subtype', 'className', 'access'],
       hidden: ['name', 'value', 'access'],
       paragraph: ['label', 'subtype', 'className', 'access'],
-      fieldset: ['label', 'subtype', 'className', 'access', 'repeatable'],
+      fieldset: ['label', 'subtype', 'className', 'name', 'access', 'repeatable'],
       number: defaultAttrs.concat(['min', 'max', 'step']),
       select: defaultAttrs.concat(['multiple', 'options']),
+      condition: defaultAttrs.concat(['options']),
       textarea: defaultAttrs.concat(['subtype', 'maxlength', 'rows']),
     }
 

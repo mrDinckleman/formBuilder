@@ -10,6 +10,7 @@ import controlTextarea from './textarea'
 import controlTinymce from './textarea.tinymce'
 import controlQuill from './textarea.quill'
 import controlFieldset from './fieldset'
+import controlCondition from './condition'
 
 export default {
   controlAutocomplete,
@@ -24,4 +25,5 @@ export default {
   controlTinymce,
   controlQuill,
   controlFieldset,
+  controlCondition,
 }

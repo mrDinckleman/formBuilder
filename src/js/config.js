@@ -11,6 +11,7 @@ export const defaultOptions = {
   append: false, // append non-editable content to the form.
   controlOrder: [
     'fieldset',
+    'condition',
     'autocomplete',
     'button',
     'checkbox-group',
