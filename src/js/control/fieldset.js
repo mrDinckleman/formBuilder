@@ -21,7 +21,7 @@ export default class controlFieldset extends control {
    * @return {Object} DOM Element to be injected into the form.
    */
   build() {
-    const { type, repeatable, ...attrs } = this.config
+    const { type, repeatable, className, ...attrs } = this.config
     let tag = type
 
     // some types use an element of a different name
@@ -40,7 +40,7 @@ export default class controlFieldset extends control {
     })
     this.fieldset = this.markup(tag, repeatable ? remove : '', {
       ...attrs,
-      className: 'fieldset',
+      className: className + ' fieldset',
     })
     const content = [this.fieldset]
 

@@ -177,11 +177,6 @@ export const nameAttr = (function() {
     return prefix + '-' + epoch + '-' + counter
   }
 })()
-export const nameAttr = function(field, isRepeatable) {
-  const epoch = new Date().getTime()
-  const prefix = field.type || hyphenCase(field.label)
-  return prefix + '-' + epoch
-}
 
 /**
  * Determine content type
